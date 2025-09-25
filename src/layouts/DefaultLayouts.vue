@@ -58,7 +58,7 @@ const currentView = computed(() => {
 @max-width: 1200px;
 
 .layout-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
 }
@@ -72,6 +72,7 @@ const currentView = computed(() => {
   background-color: @bg-color;
   box-shadow: 0 2px 4px @shadow-color;
   z-index: 1000;
+	height: 64px;
   
   .header-container {
     max-width: @max-width;
