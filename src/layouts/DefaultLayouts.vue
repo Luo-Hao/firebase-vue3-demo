@@ -16,10 +16,18 @@
             <router-link to="/about" class="nav-link">About</router-link>
           </nav>
         </div>
-        <!-- 右侧：登录和注册按钮 -->
+        <!-- 右侧：根据用户状态显示不同按钮 -->
         <div class="header-right">
-          <button class="btn btn-login">登录</button>
-          <button class="btn btn-register">注册</button>
+          <template v-if="isAuthenticated">
+            <div class="user-info">
+              <span class="username">{{ user?.email || '用户' }}</span>
+              <button class="btn btn-logout" @click="handleLogout">登出</button>
+            </div>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="btn btn-login">登录</router-link>
+            <router-link to="/register" class="btn btn-register">注册</router-link>
+          </template>
         </div>
       </div>
     </header>
@@ -33,15 +41,34 @@
 
 <script lang="ts" setup>
 import { computed, defineAsyncComponent } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useCurrentUser, useIsAuthenticated } from '../firebase/userStore'
+import { logout } from '../firebase/auth'
 
 const route = useRoute()
+const router = useRouter()
+
+// 获取用户状态
+const user = useCurrentUser()
+const isAuthenticated = useIsAuthenticated()
 
 // 根据路由动态加载对应的视图组件
 const currentView = computed(() => {
   const viewName = route.name === 'home' ? 'HomeView' : 'AboutView'
   return defineAsyncComponent(() => import(`../views/${viewName}.vue`))
 })
+
+// 处理登出
+const handleLogout = async () => {
+  try {
+    await logout()
+    // 登出后刷新页面或跳转到登录页
+    router.push('/')
+  } catch (error) {
+    console.error('登出失败:', error)
+    alert('登出失败，请稍后重试')
+  }
+}
 </script>
 
 <style lang="less" scoped>
@@ -72,7 +99,7 @@ const currentView = computed(() => {
   background-color: @bg-color;
   box-shadow: 0 2px 4px @shadow-color;
   z-index: 1000;
-	height: 64px;
+  height: 64px;
   
   .header-container {
     max-width: @max-width;
@@ -98,7 +125,6 @@ const currentView = computed(() => {
         
         .logo-image {
           height: 2.5rem;
-          width: auto;
         }
         
         .logo-text {
@@ -151,6 +177,9 @@ const currentView = computed(() => {
         font-size: 0.9rem;
         font-weight: 500;
         transition: all @transition-time;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
         
         &-login {
           background-color: transparent;
@@ -172,6 +201,28 @@ const currentView = computed(() => {
             background-color: @primary-hover;
             border-color: @primary-hover;
           }
+        }
+        
+        &-logout {
+          background-color: #e74c3c;
+          color: white;
+          border: 1px solid #e74c3c;
+          
+          &:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+          }
+        }
+      }
+      
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        
+        .username {
+          font-weight: 500;
+          color: @text-color;
         }
       }
     }
